@@ -1,3 +1,0 @@
-To connect to specific Domain change 
-
-$searchbase = Get-domain DOMAIN | .....
