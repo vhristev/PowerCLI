@@ -1,0 +1,159 @@
+﻿
+
+DISTRO:
+[12:20]Debian@root/home/hristev#uname -sro
+Linux 2.6.14 GNU/Linux
+
+Предполагам,че имате инсталирани и функциониращи ssh clien & ssh server,защотос няма да се спирам как се прави 
+това написал съм тема погледнете я ако не ви е ясно.
+
+Debian@root~# ---> Локалната машина   (LOCAL)
+Stabil@root~# ---> Отдалечената машина (REMOTE)
+
+-Конфигуриране на LOCAL машината (записване на IP адреса като хост).
+!!Това е по избор,но според мен олеснява много работата то постоянното писане на адреси.!!
+Сега записваме IP адреса на ремот машината в hosts така
+ще можете да не пишете "ssh x.x.x.x" където X.X.X.X e IP адрес,
+а да напишете "ssh remote"(в този случай REMOTE е stabil)
+!!!!!!! ВАЖНО !!!!!!! Внимавайте използвайте >> защото ако напишете
+само > ще изтриете цялото съдържание на файла и ще остане само
+въведеното от вас.
+Можете също да го отворите с любимия си текстов редактор.Файла се намира
+в /etc/hosts
+
+[12:29]Debian@root/#echo "X.X.X.X stabil" >> /etc/hosts         
+
+Сега просто напишете:
+[12:35]Debian@root/#ssh stabil 
+и вече имате конекцията към х.х.х.х IP адреса
+
+###############################
+За да работи всичко както трябва е нужно да направите следните опции за SSH в LOCAL и REMOTE машините
+###############################
+[15:25]Debian@root~/.ssh#nano /etc/ssh/ssh_config    <------ LOCAL HOST (това е ssh client)
+
+#   ConnectTimeout 0
+#   StrictHostKeyChecking ask
+   IdentityFile ~/.ssh/identity 	             <------ Махане на коментара
+#  IdentityFile ~/.ssh/id_rsa
+#   IdentityFile ~/.ssh/id_dsa
+
+[15:25]Stabil@root~/.ssh#nano /etc/ssh/sshd_config     <------ REMOTE HOST (това е ssh server) 
+# Authentication:
+LoginGraceTime 25
+PermitRootLogin yes
+StrictModes yes
+
+RSAAuthentication yes
+PubkeyAuthentication yes
+AuthorizedKeysFile      %h/.ssh/authorized_keys        <------- Тук се откоментира.
+
+
+Малко разяснения за ключовете.Kой метод и опции ще изберете вие?
+За тази статия ги разделям на два вида.Всичко останало е настройка на ключовете(защото всичко се върти около паролите).
+- с парола
+- без прола
+Няма да влизам в подробности кое кодиране е по-добро и как става,защото това не е идеята на статията,но все пак
+ще спомена.																	
+
+Ключовете се генерират посредством ssh-keygen - authentication key generation, management and conversion 
+
+-Имате възможност да изберете какъв тип ключ да се генерира RSA или DSA посредством -t опцията.
+Аз използвам RSA(Rivest, Shamir, and Adelman) това е може би най-добрият алгоритъм той се използва в
+ PGP(Pretty Good Privacy).С него се работи лесно и има много добро управление на големи файлове с числа.
+
+-След като генерирате ключовете те по подразбиране се създават в ~/.ssh/id_rsa
+аз сменям името на ~/.ssh/identity това е по избор.Трябва само да изберете от /etc/ssh/ssh_config правилния 
+IdentityFile(по доло пише как става това)
+
+
+
+
+Използвал съм ключове с ПАРОЛА ако искате
+
+[15:23]Debian@root~/.ssh#ssh-keygen -t rsa                                   <----Генериране на ключовете
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): /root/.ssh/identity <----Създаване на път по предпочитания
+Enter passphrase (empty for no passphrase):                                  <----Въвеждане на парола !!!
+Enter same passphrase again:
+Your identification has been saved in /root/.ssh/identity.
+Your public key has been saved in /root/.ssh/identity.pub.
+The key fingerprint is:
+e2:ad:4f:37:4d:31:85:08:37 root@Debian
+[15:23]Debian@root~/.ssh#ls -l						      <---Виждате тук частния и публичния ключ
+total 12
+-rw------- 1 root root 1743 2006-04-25 15:23 identity
+-rw-r--r-- 1 root root  393 2006-04-25 15:23 identity.pub
+-rw-r--r-- 1 root root  502 2006-04-25 10:05 known_hosts
+[15:24]Debian@root~/.ssh#cat identity.pub | ssh -l root stabil "cat - >>.ssh/authorized_keys"
+"Debian only for fat people's by Eazy-Snatch"    Eazy Snatch Crew Plovdiv
+ Debian GNU/Linux
+Password:
+
+
+[15:26]Debian@root~/.ssh#ssh stabil -v
+OpenSSH_4.2p1 Debian-7, OpenSSL 0.9.8a 11 Oct 2005
+debug1: Reading configuration data /etc/ssh/ssh_config
+debug1: Applying options for *
+debug1: Connecting to stabil [X.X.1X7.1X] port 22.
+debug1: Connection established.
+debug1: permanently_set_uid: 0/0
+debug1: identity file /root/.ssh/identity type 1
+debug1: Remote protocol version 2.0, remote software version OpenSSH_3.8.1p1 Debian-8.sarge.4
+debug1: match: OpenSSH_3.8.1p1 Debian-8.sarge.4 pat OpenSSH_3.*
+debug1: Enabling compatibility mode for protocol 2.0
+debug1: Local version string SSH-2.0-OpenSSH_4.2p1 Debian-7
+debug1: SSH2_MSG_KEXINIT sent
+debug1: SSH2_MSG_KEXINIT received
+debug1: kex: server->client aes128-cbc hmac-md5 none
+debug1: kex: client->server aes128-cbc hmac-md5 none
+debug1: SSH2_MSG_KEX_DH_GEX_REQUEST(1024<1024<8192) sent
+debug1: expecting SSH2_MSG_KEX_DH_GEX_GROUP
+debug1: SSH2_MSG_KEX_DH_GEX_INIT sent
+debug1: expecting SSH2_MSG_KEX_DH_GEX_REPLY
+debug1: Host 'stabil' is known and matches the RSA host key.
+debug1: Found key in /root/.ssh/known_hosts:1
+debug1: ssh_rsa_verify: signature correct
+debug1: SSH2_MSG_NEWKEYS sent
+debug1: expecting SSH2_MSG_NEWKEYS
+debug1: SSH2_MSG_NEWKEYS received
+debug1: SSH2_MSG_SERVICE_REQUEST sent
+debug1: SSH2_MSG_SERVICE_ACCEPT received
+
+"Debian only for fat people's by Eazy-Snatch"    Eazy Snatch Crew Plovdiv
+ Debian GNU/Linux
+debug1: Authentications that can continue: publickey,keyboard-interactive
+debug1: Next authentication method: publickey
+debug1: Offering public key: /root/.ssh/identity
+debug1: Server accepts key: pkalg ssh-rsa blen 277
+debug1: PEM_read_PrivateKey failed
+debug1: read PEM private key done: type <unknown>
+Enter passphrase for key '/root/.ssh/identity':		<------Тук въвеждаме паролата за ключовете
+debug1: read PEM private key done: type RSA
+debug1: Authentication succeeded (publickey).
+debug1: channel 0: new [client-session]
+debug1: Entering interactive session.
+debug1: Sending environment.
+debug1: Sending env LANG = en_US
+Last login: Tue Apr 25 14:55:08 2006 from ...
+[15:23]Stabil@root~#								<-------Вече сме в REMOTE машината
+
+Със въвеждане на парола,за да не пишем парола използваме ssh-agent
+
+[15:31]Debian@root~/.ssh#ssh-agent $BASH                      <--- Пускане на SSH-AGENT
+[15:31]Debian@root~/.ssh#ssh-add                              <--- Add на ЧАСТНИЯ ключ
+Enter passphrase for /root/.ssh/identity:                     <--- Парола на частния ключ (въвежда се само 1-н път)
+Identity added: /root/.ssh/identity (/root/.ssh/identity)
+[15:31]Debian@root~/.ssh#ssh-add -l                           <--- Разглеждане кои ключове сме си записали
+2048 e2:ad:4f:37:4d:31:85:08:37:ef /root/.ssh/identity (RSA)
+[15:32]Debian@root~/.ssh#ssh stabil 		         	      <-- -Конекция без парола.
+
+"Debian only for fat people's by Eazy-Snatch"    Eazy Snatch Crew Plovdiv
+ Debian GNU/Linux
+Last login: Tue Apr 25 15:23:07 2006 from ...
+[15:29]Stabil@root~#              		             		  <--- REMOTE HOST 
+
+######### Създаване на криптирани тунели.
+За какво пък ми е този тунел !?
+
+ssh -C -L 1100:localhost:110 username@host

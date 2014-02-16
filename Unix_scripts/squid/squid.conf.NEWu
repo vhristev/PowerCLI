@@ -1,0 +1,88 @@
+
+####### Basic Config 
+http_port 8080
+icp_port 0
+
+####### Do not Cache cgi-bin
+hierarchy_stoplist cgi-bin ?
+acl CGI urlpath_regex cgi-bin \?
+no_cache deny CGI
+
+####### Memory usage
+cache_mem 16 MB
+
+####### Dir capacity 300 MB 
+cache_dir ufs /home/cache 300 16 256
+
+######## Log Files
+cache_log /var/log/squid/cache.log
+cache_access_log /var/log/squid/access.log
+cache_store_log  /var/log/squid/store.log
+cache_swap_log /var/log/squid/swap.log
+debug_options ALL,1
+
+half_closed_clients off
+logfile_rotate 10
+redirect_rewrites_host_header off
+cache_replacement_policy GDSF
+replacement_policy GDSF
+
+######### ACL's
+acl localnet src 192.168.0.0/255.255.255.0
+acl localhost src 127.0.0.1/255.255.255.255
+acl safe_ports port 80 443 210 110 70 20 21 3128 1025-65535
+acl all src 0.0.0.0/0.0.0.0
+
+http_access allow localnet
+http_access allow localhost
+http_access deny !safe_ports
+#http_access deny CONNECT
+http_access deny all
+maximum_object_size 3000 KB
+
+store_avg_object_size 50 KB
+
+#################################
+
+httpd_accel_host virtual                                                                             
+httpd_accel_port 80                                                                                  
+httpd_accel_with_proxy on                                                                            
+httpd_accel_uses_host_header on                                                                      
+ 
+cache_effective_user squid
+cache_effective_group squid
+
+half_closed_clients off
+log_icp_queries off
+buffered_logs on
+
+############# TIME DELAY 
+acl day time 09:00-23:59
+
+############# DELAY POOLS 
+acl da1 url_regex -i 192.168           
+acl ne2 url_regex -i 212.104.117.120 .exe .mp3 .vqf .tar.gz .gz .rpm .zip .rar .avi .mpeg .mpe .mpg .qt .ram .rm .iso .raw .wav .mov       
+
+delay_pools 2
+delay_class 1 2
+delay_parameters 1 -1/-1 -1/-1
+delay_access 1 allow da1
+delay_class 2 2
+
+
+delay_parameters 2 5000/150000 5000/120000 
+delay_access 2 allow day                                                                             
+delay_access 2 deny !day                                                                             
+delay_access 2 allow ne2        
+
+visible_hostname es.plcnet.org
+
+        acl manager proto cache_object
+        acl local src 127.0.0.1/255.255.255.255
+        acl webserv src 212.104.117.120/255.255.255.0
+        
+        http_access allow manager local
+        http_access allow manager webserv
+        http_access deny manager
+
+cachemgr_passwd 123456 all

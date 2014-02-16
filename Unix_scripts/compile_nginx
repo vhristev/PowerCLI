@@ -1,0 +1,11 @@
+wget http://sysoev.ru/nginx/nginx-0.6.33.tar.gz
+tar -zvxf nginx-0.6.33.tar.gz
+
+# install nginx
+cd nginx-0.6.33/
+PHPPREFIX=/usr/local/nginx-0.6.33
+./configure --prefix=$PHPPREFIX \
+--pid-path=/var/run/nginx.pid \
+--user=www-data --group=www-data \
+--http-log-path=/var/log/nginx/access.log --error-log-path=/var/log/nginx/error.log
+make && make install 

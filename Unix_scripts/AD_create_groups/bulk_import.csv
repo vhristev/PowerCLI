@@ -1,0 +1,6 @@
+GroupName,GroupType,GroupLocation
+partner-vsel_catalog_author,Global,"OU=Groups,OU=OneCloud"
+partner-vsel_console _access_only,Global,"OU=Groups,OU=OneCloud"
+partner-vsel_org_admins,Global,"OU=Groups,OU=OneCloud"
+partner-vsel_vapp_author,Global,"OU=Groups,OU=OneCloud"
+partner-vsel_vapp_user,Global,"OU=Groups,OU=OneCloud"
